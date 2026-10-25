@@ -1,0 +1,20 @@
+Parameter,ConfirmedValue,Unit,MeasurementMethodOrNotes
+Coxa link length Lc,42.2,mm,Center-to-center distance from coxa yaw axis to femur pitch axis (CONFIRMED)
+Femur link length Lf,65.4,mm,Center-to-center distance from femur pitch axis to tibia pitch axis (CONFIRMED)
+Tibia link length Lt,97.5,mm,Center of knee pitch axis to foot ground contact point (CONFIRMED)
+Theoretical minimum reach d_min,32.1,mm,"abs(Lt - Lf) = 97.5 - 65.4 (CONFIRMED BOUND)"
+Theoretical maximum reach d_max,162.9,mm,"Lf + Lt = 65.4 + 97.5 (CONFIRMED BOUND)"
+Chassis longitudinal hip distance (Body Length),120.0,mm,Measure between front and rear coxa yaw axes (CONFIGURABLE PLACEHOLDER)
+Chassis lateral hip distance (Body Width),90.0,mm,Measure between left and right coxa yaw axes (CONFIGURABLE PLACEHOLDER)
+Chassis total height,60.0,mm,Measure chassis bottom to top plate (ESTIMATED)
+Total robot mass (with battery),TBD,kg,Weigh fully assembled robot on a digital kitchen scale
+Center of Mass X offset,TBD,mm,Balance robot on a knife-edge cylinder along longitudinal axis
+Center of Mass Y offset,TBD,mm,Balance robot on a knife-edge cylinder along lateral axis
+Servo model,MG90S / SG90,,Check label on servo bodies (Metal gears strongly recommended)
+Servo stall / peak current,0.85,A,At 5.0V regulated servo supply rail
+Servo continuous torque rating,1.8,kg*cm,Check manufacturer datasheet at 5.0V
+Battery chemistry and cell count,2S LiPo / 18650,,e.g. 7.4V 2S LiPo or 2x 18650 in series
+Battery nominal capacity,2200,mAh,Read label on battery pack
+DC-DC Buck converter continuous rating,5.0,A,"Verify buck converter rating (A small 2A LM2596 is insufficient for 12 servos; use 5A+)"
+Measured 5V servo rail voltage under load,TBD,V,Measure at PCA9685 V+ screw terminal with multimeter during walking
+Measured average walking current,TBD,A,Measure inline current from power supply during forward walk

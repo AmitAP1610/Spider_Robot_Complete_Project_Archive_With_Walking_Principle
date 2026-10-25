@@ -1,0 +1,13 @@
+LogicalIndex,LegName,JointName,PCA9685Channel,ServoRefAngleDeg,ServoCenterCmdDeg,DirectionInvert,MountingOffsetDeg,MinSafeCmdDeg,MaxSafeCmdDeg,MinPulseUs,MaxPulseUs,MinTick50Hz,MaxTick50Hz,CalibrationStatus,Notes
+0,Front Left (FL),Coxa (Yaw),0,90.0,90.0,+1,0.0,55.0,125.0,500,2500,110,510,INITIAL_DEFAULT,Tune using Serial 'C' calibration mode
+1,Front Left (FL),Femur (Pitch),1,90.0,90.0,+1,0.0,50.0,130.0,500,2500,110,510,INITIAL_DEFAULT,Tune using Serial 'C' calibration mode
+2,Front Left (FL),Tibia (Knee),2,90.0,90.0,+1,0.0,45.0,135.0,500,2500,110,510,INITIAL_DEFAULT,Tune using Serial 'C' calibration mode
+3,Front Right (FR),Coxa (Yaw),4,90.0,90.0,-1,0.0,55.0,125.0,500,2500,110,510,INITIAL_DEFAULT,Inverted (-1) for mirrored mount
+4,Front Right (FR),Femur (Pitch),5,90.0,90.0,-1,0.0,50.0,130.0,500,2500,110,510,INITIAL_DEFAULT,Inverted (-1) for mirrored mount
+5,Front Right (FR),Tibia (Knee),6,90.0,90.0,-1,0.0,45.0,135.0,500,2500,110,510,INITIAL_DEFAULT,Inverted (-1) for mirrored mount
+6,Back Left (BL),Coxa (Yaw),8,90.0,90.0,+1,0.0,55.0,125.0,500,2500,110,510,INITIAL_DEFAULT,Tune using Serial 'C' calibration mode
+7,Back Left (BL),Femur (Pitch),9,90.0,90.0,+1,0.0,50.0,130.0,500,2500,110,510,INITIAL_DEFAULT,Tune using Serial 'C' calibration mode
+8,Back Left (BL),Tibia (Knee),10,90.0,90.0,+1,0.0,45.0,135.0,500,2500,110,510,INITIAL_DEFAULT,Tune using Serial 'C' calibration mode
+9,Back Right (BR),Coxa (Yaw),12,90.0,90.0,-1,0.0,55.0,125.0,500,2500,110,510,INITIAL_DEFAULT,Inverted (-1) for mirrored mount
+10,Back Right (BR),Femur (Pitch),13,90.0,90.0,-1,0.0,50.0,130.0,500,2500,110,510,INITIAL_DEFAULT,Inverted (-1) for mirrored mount
+11,Back Right (BR),Tibia (Knee),14,90.0,90.0,-1,0.0,45.0,135.0,500,2500,110,510,INITIAL_DEFAULT,Inverted (-1) for mirrored mount

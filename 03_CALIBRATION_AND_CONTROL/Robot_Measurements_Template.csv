@@ -1,0 +1,17 @@
+Parameter,Value,Unit,MethodOrNotes
+Coxa offset/length L0,TBD,mm,Measure joint-axis geometry for each leg
+Femur length L1,TBD,mm,Joint-axis centre to centre
+Tibia length L2,TBD,mm,Joint-axis centre to centre
+Body length,TBD,mm,Measure chassis
+Body width,TBD,mm,Measure chassis
+Body height,TBD,mm,Measure chassis
+Assembled robot mass,TBD,kg,Weigh robot
+Centre of mass x,TBD,mm,Estimate or measure
+Centre of mass y,TBD,mm,Estimate or measure
+Servo model,TBD,,Read label/datasheet
+Servo peak current,TBD,A,At intended voltage
+Servo torque rating,TBD,N*m or kg*cm,At intended voltage
+Battery nominal voltage,TBD,V,Read battery label
+Battery capacity,TBD,Ah,Read battery label
+Buck converter continuous current,TBD,A,Verify actual module rating and cooling
+Measured average power,TBD,W,Measure during representative walking

@@ -1,0 +1,13 @@
+LogicalIndex,Leg,Joint,PCA9685Channel,CenterDeg,MinDeg,MaxDeg,Direction,MinTick,MaxTick,Notes
+0,Front Left,Coxa,0,TBD,TBD,TBD,TBD,TBD,TBD,Measure on assembled robot
+1,Front Left,Femur,1,TBD,TBD,TBD,TBD,TBD,TBD,Measure on assembled robot
+2,Front Left,Tibia,2,TBD,TBD,TBD,TBD,TBD,TBD,Measure on assembled robot
+3,Front Right,Coxa,4,TBD,TBD,TBD,TBD,TBD,TBD,Measure on assembled robot
+4,Front Right,Femur,5,TBD,TBD,TBD,TBD,TBD,TBD,Measure on assembled robot
+5,Front Right,Tibia,6,TBD,TBD,TBD,TBD,TBD,TBD,Measure on assembled robot
+6,Back Left,Coxa,8,TBD,TBD,TBD,TBD,TBD,TBD,Measure on assembled robot
+7,Back Left,Femur,9,TBD,TBD,TBD,TBD,TBD,TBD,Measure on assembled robot
+8,Back Left,Tibia,10,TBD,TBD,TBD,TBD,TBD,TBD,Measure on assembled robot
+9,Back Right,Coxa,12,TBD,TBD,TBD,TBD,TBD,TBD,Measure on assembled robot
+10,Back Right,Femur,13,TBD,TBD,TBD,TBD,TBD,TBD,Measure on assembled robot
+11,Back Right,Tibia,14,TBD,TBD,TBD,TBD,TBD,TBD,Measure on assembled robot
