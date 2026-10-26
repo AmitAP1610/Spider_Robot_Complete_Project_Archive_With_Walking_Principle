@@ -113,8 +113,14 @@ public:
     void captureAllCenters();
     void setJointCenterAngle(uint8_t jointIndex, float centerAngleDeg);
 
+    /**
+     * Set FreeRTOS mutex for thread-safe shared I2C bus arbitration.
+     */
+    void setI2CMutex(SemaphoreHandle_t mutex) { m_i2cMutex = mutex; }
+
 private:
     Adafruit_PWMServoDriver m_pwm;
+    SemaphoreHandle_t m_i2cMutex;
     uint8_t m_i2cAddr;
     uint8_t m_sdaPin;
     uint8_t m_sclPin;

@@ -2,6 +2,7 @@
 
 ServoDriver::ServoDriver()
     : m_pwm(0x40),
+      m_i2cMutex(nullptr),
       m_i2cAddr(0x40),
       m_sdaPin(21),
       m_sclPin(22),
@@ -21,7 +22,7 @@ bool ServoDriver::init(uint8_t sdaPin, uint8_t sclPin, uint8_t i2cAddr) {
 
     Wire.begin(m_sdaPin, m_sclPin);
     Wire.setTimeOut(50);   // Prevent bus freeze if jumper wires disconnect
-    Wire.setClock(100000); // 100 kHz standard I2C speed for maximum reliability
+    Wire.setClock(400000); // 400 kHz Fast-Mode I2C for fast OLED and PCA9685 updates
 
     // Multi-attempt probe on configured address
     bool found = false;
@@ -105,6 +106,13 @@ void ServoDriver::update(float dt, const LegJointAngles targetAngles[4]) {
     float maxDeltaDeg = GaitConfig::MAX_JOINT_SPEED_DEG_PER_SEC * dt;
     if (maxDeltaDeg < 0.1f) maxDeltaDeg = 0.1f;
 
+    // Acquire shared I2C bus mutex before writing to PCA9685
+    if (m_i2cMutex != nullptr) {
+        if (xSemaphoreTake(m_i2cMutex, pdMS_TO_TICKS(15)) != pdTRUE) {
+            return; // Bus temporarily occupied by OLED; skip this 20ms slice
+        }
+    }
+
     for (uint8_t leg = 0; leg < 4; leg++) {
         float modelAngles[3] = {
             targetAngles[leg].coxaDeg,
@@ -134,6 +142,10 @@ void ServoDriver::update(float dt, const LegJointAngles targetAngles[4]) {
             m_currentAngleDeg[idx] = current;
             writeServoHardware(idx, current);
         }
+    }
+
+    if (m_i2cMutex != nullptr) {
+        xSemaphoreGive(m_i2cMutex);
     }
 }
 

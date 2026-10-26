@@ -80,6 +80,11 @@ Spider_Robot_Walking_Only_ESP32_PCA9685/
 ├── GaitPlanner.cpp                             # Trajectory generator and differential turning logic
 ├── ServoDriver.h                               # PCA9685 I2C driver and rate-limiting interface
 ├── ServoDriver.cpp                             # Tick conversion, hardware writes, calibration jogs
+├── FaceController.h                            # SSD1306 OLED face animator and FreeRTOS task interface
+├── FaceController.cpp                          # Face state machine, idle blinks, and thread-safe rendering
+├── WebRemote.h                                 # Smartphone Wi-Fi SoftAP and Captive Portal remote interface
+├── WebRemote.cpp                               # Responsive touch controller, D-Pad, face triggers, and tests
+├── face-bitmaps.h                              # 35+ 128x64 monochrome PROGMEM face expression bitmaps
 ├── README.md                                   # Comprehensive project overview and quickstart
 ├── WALKING_PRINCIPLE.md                        # Theoretical manual, torque sizing, and electrical specs
 ├── WALKING_ALGORITHM.md                        # Complete mathematical and kinematic derivation
@@ -112,6 +117,10 @@ Open the Arduino IDE Serial Monitor at **115200 baud** (configured with "Newline
 | `R` | **Report Status** | Prints active state, gait type, cycle period, and I2C connection |
 | `K` | **Kinematics Test** | Runs Forward & Inverse Kinematics verification suite (reconstruction error < 0.01 mm) |
 | `C` | **Calibration Mode** | Enters single-servo jogging and calibration menu |
+| `FACE <name>` | **Set Face** | Command expression (e.g. `FACE CUTE`, `FACE HAPPY`, `FACE ANGRY`, `FACE REST`) |
+| `FACE LIST` | **List Faces** | Prints all 35+ available facial expression names to Serial |
+| `FACE AUTO` | **Face Auto Mode** | Re-enables automatic motion-synchronized facial expressions |
+| `FACE FPS <N>` | **Animation Speed**| Adjusts playback frame rate (e.g. `FACE FPS 4`) |
 | `?` | **Help** | Displays the full serial command menu |
 
 > **IMPORTANT SAFETY NOTICE ON STOPPING:**  
@@ -121,15 +130,25 @@ Open the Arduino IDE Serial Monitor at **115200 baud** (configured with "Newline
 
 ## 5. Quickstart & Installation
 
-### Required Software
+### Required Software & Libraries
 1. **Arduino IDE** (v1.8.19 or v2.x).
 2. **ESP32 Arduino Core** by Espressif Systems:
    - Add URL to Board Manager: `https://raw.githubusercontent.com/espressif/arduino-esp32/gh-pages/package_esp32_index.json`
    - Install `esp32` by Espressif Systems.
    - Select Board: `ESP32 Dev Module`.
-3. **Adafruit PWM Servo Driver Library**:
-   - Open Library Manager (`Ctrl + Shift + I`).
-   - Search for `Adafruit PWM Servo Driver` and install.
+3. **Arduino Libraries** (Install via Arduino Library Manager `Ctrl + Shift + I`):
+   - `Adafruit PWM Servo Driver` (by Adafruit)
+   - `Adafruit SSD1306` (by Adafruit)
+   - `Adafruit GFX Library` (by Adafruit)
+
+### OLED Display Wiring (SSD1306 128x64 I2C)
+The OLED display shares the hardware I2C bus with the PCA9685 servo driver, safely arbitrated via a FreeRTOS mutex on ESP32 Core 0:
+- **OLED VCC** $\rightarrow$ ESP32 3.3V
+- **OLED GND** $\rightarrow$ ESP32 GND
+- **OLED SDA** $\rightarrow$ ESP32 GPIO 21 (Shared with PCA9685 SDA)
+- **OLED SCL** $\rightarrow$ ESP32 GPIO 22 (Shared with PCA9685 SCL)
+
+*(Note: If no OLED display is plugged in, the robot automatically detects this and continues in headless walking mode with zero errors.)*
 
 ### Uploading Firmware
 1. Open `Spider_Robot_Walking_Only_ESP32_PCA9685.ino` in Arduino IDE.
