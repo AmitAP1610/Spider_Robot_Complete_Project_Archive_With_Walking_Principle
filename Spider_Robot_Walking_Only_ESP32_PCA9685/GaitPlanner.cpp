@@ -79,30 +79,32 @@ void GaitPlanner::update(uint32_t currentTimeMs, Vector3D outFootTargets[4]) {
         m_masterPhase = 0.0f;
     }
 
-    // Determine gait phase offsets per leg
-    float offsets[4] = { 0.0f, 0.5f, 0.5f, 0.0f }; // Default Trot
+    // Determine swing trigger times per leg
+    float triggerTimes[4];
 
     if (m_activeGait == GaitConfig::GAIT_DIAGONAL_TROT) {
-        m_dutyFactor = GaitConfig::DEFAULT_DUTY_FACTOR_TROT;
-        // Group A: Leg 0 (FL) + Leg 3 (BR) -> Offset 0.0
-        // Group B: Leg 1 (FR) + Leg 2 (BL) -> Offset 0.5
-        offsets[0] = 0.0f;
-        offsets[1] = 0.5f;
-        offsets[2] = 0.5f;
-        offsets[3] = 0.0f;
+        m_dutyFactor = GaitConfig::DEFAULT_DUTY_FACTOR_TROT; // 0.70 (30% swing, 70% stance)
+        // Group A: Leg 0 (FL) + Leg 3 (BR) -> Swing triggers at 0.00
+        // Group B: Leg 1 (FR) + Leg 2 (BL) -> Swing triggers at 0.50
+        triggerTimes[0] = 0.00f;
+        triggerTimes[1] = 0.50f;
+        triggerTimes[2] = 0.50f;
+        triggerTimes[3] = 0.00f;
     } else {
-        m_dutyFactor = GaitConfig::DEFAULT_DUTY_FACTOR_CRAWL;
-        // 4-beat crawl: BL(2) -> FL(0) -> BR(3) -> FR(1)
-        offsets[2] = 0.00f; // BL
-        offsets[0] = 0.25f; // FL
-        offsets[3] = 0.50f; // BR
-        offsets[1] = 0.75f; // FR
+        m_dutyFactor = GaitConfig::DEFAULT_DUTY_FACTOR_CRAWL; // 0.75 (25% swing, 75% stance)
+        // 4-beat static crawl wave sequence: BL(2) -> FL(0) -> BR(3) -> FR(1)
+        triggerTimes[2] = 0.00f; // BL swings at [0.00, 0.25)
+        triggerTimes[0] = 0.25f; // FL swings at [0.25, 0.50)
+        triggerTimes[3] = 0.50f; // BR swings at [0.50, 0.75)
+        triggerTimes[1] = 0.75f; // FR swings at [0.75, 1.00)
     }
 
-    // Calculate individual leg phases: stance is [0, beta), swing is [beta, 1.0)
+    // Calculate individual leg phases:
+    // Local phase phi in [0.0 .. 1.0) relative to leg's swing trigger point
+    const float swingDuration = 1.0f - m_dutyFactor;
     for (int i = 0; i < 4; i++) {
-        m_legPhase[i] = fmodf(m_masterPhase + offsets[i], 1.0f);
-        m_legInSwing[i] = (m_legPhase[i] >= m_dutyFactor && m_gaitAmplitude > 0.01f);
+        m_legPhase[i] = fmodf(m_masterPhase - triggerTimes[i] + 1.0f, 1.0f);
+        m_legInSwing[i] = (m_legPhase[i] < swingDuration && m_gaitAmplitude > 0.01f);
     }
 
     // Calculate base forward stride and turn differential
@@ -172,13 +174,14 @@ void GaitPlanner::calculateLegTrajectory(uint8_t legIndex, float phase, float st
     (void)legIndex;
     (void)strideY;
 
-    // Master phase: u in [0.0 .. 1.0)
-    float u = fmodf(phase, 1.0f);
-    if (u < 0.0f) u += 1.0f;
+    // Local normalized phase: phi in [0.0 .. 1.0)
+    float phi = fmodf(phase, 1.0f);
+    if (phi < 0.0f) phi += 1.0f;
 
-    const float beta = m_dutyFactor; // Stance duty factor (default 0.70)
-    const float L = strideX;         // Horizontal step length in mm
-    const float H = m_stepHeightMm * m_gaitAmplitude; // Foot lift height in mm
+    const float beta = m_dutyFactor;                   // Stance duty factor (0.70 for trot, 0.75 for crawl)
+    const float sigma = 1.0f - beta;                  // Swing duration fraction (0.30 for trot, 0.25 for crawl)
+    const float L = strideX;                           // Horizontal step length in mm
+    const float H = m_stepHeightMm * m_gaitAmplitude;  // Foot lift height in mm
 
     const float x0 = RobotGeometry::DEFAULT_STANCE_X;
     const float y0 = RobotGeometry::DEFAULT_STANCE_Y;
@@ -186,45 +189,35 @@ void GaitPlanner::calculateLegTrajectory(uint8_t legIndex, float phase, float st
 
     outTarget.y = y0;
 
-    if (u < beta) {
+    if (phi < sigma) {
         // --------------------------------------------------------------------
-        // STANCE PHASE (0 <= u < beta):
-        // Foot supports body, moving backward relative to chassis from +L/2 to -L/2
-        // Normalized stance progress: s = u / beta in [0.0 .. 1.0]
+        // SWING PHASE (0 <= phi < sigma):
+        // Foot lifts off rear position (x0 - L/2), clears ground along a
+        // smooth sinusoidal arch (z0 -> z0 + H -> z0), travels forward via
+        // smooth cosine interpolation, and touches down softly at (x0 + L/2).
         // --------------------------------------------------------------------
-        float s = u / beta;
+        float q = phi / sigma; // Normalized swing progress [0.0 .. 1.0]
 
-        // Linear ground retraction matching body forward advance:
-        // x(s) = +L/2 - L*s
-        // At s=0.0: x = x0 + L/2 (touchdown forward placement)
-        // At s=0.5: x = x0       (mid-stance under hip)
-        // At s=1.0: x = x0 - L/2 (liftoff rear extension)
-        outTarget.x = x0 + (L / 2.0f) - L * s;
-        outTarget.z = z0; // Ground plane contact
+        // Smooth cosine horizontal travel with zero endpoint velocities
+        outTarget.x = x0 - (L / 2.0f) * cosf((float)M_PI * q);
+
+        // Smooth sinusoidal lift arch
+        outTarget.z = z0 + H * sinf((float)M_PI * q);
 
     } else {
         // --------------------------------------------------------------------
-        // SWING PHASE (beta <= u < 1.0):
-        // Foot lifts, travels forward, and touches down smoothly
-        // Normalized swing progress: q = (u - beta) / (1 - beta) in [0.0 .. 1.0]
+        // STANCE PHASE (sigma <= phi < 1.0):
+        // Foot remains planted firmly on the ground (z = z0) and retracts
+        // from forward touchdown position (x0 + L/2) to rear liftoff position
+        // (x0 - L/2) via smooth cosine interpolation matching swing endpoints.
         // --------------------------------------------------------------------
-        float q = (u - beta) / (1.0f - beta);
+        float s = (phi - sigma) / beta; // Normalized stance progress [0.0 .. 1.0]
 
-        // Cubic polynomial smoothstep horizontal trajectory:
-        // x(q) = -L/2 + L * (3*q^2 - 2*q^3)
-        // At q=0.0: x = x0 - L/2 (smooth liftoff from rear stance position)
-        // At q=0.5: x = x0       (passing hip center at maximum clearance)
-        // At q=1.0: x = x0 + L/2 (smooth landing at forward touchdown position)
-        // Zero-velocity endpoints: dx/dq = 6*L*q*(1 - q) = 0 at q=0 and q=1
-        float cubicProgress = 3.0f * q * q - 2.0f * q * q * q;
-        outTarget.x = x0 - (L / 2.0f) + L * cubicProgress;
+        // Smooth cosine retraction along ground
+        outTarget.x = x0 + (L / 2.0f) * cosf((float)M_PI * s);
 
-        // Smooth sinusoidal lift arch:
-        // z(q) = z0 + H * sin(pi * q)
-        // At q=0.0: z = z0 (liftoff)
-        // At q=0.5: z = z0 + H (peak clearance apex)
-        // At q=1.0: z = z0 (soft ground contact)
-        outTarget.z = z0 + H * sinf((float)M_PI * q);
+        // Foot remains planted on the ground plane
+        outTarget.z = z0;
     }
 }
 

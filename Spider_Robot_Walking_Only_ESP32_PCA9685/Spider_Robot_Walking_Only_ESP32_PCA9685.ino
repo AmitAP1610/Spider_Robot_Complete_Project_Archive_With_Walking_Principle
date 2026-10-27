@@ -113,11 +113,11 @@ void setup() {
     gaitPlanner.init();
 
     // Initialize Web Remote for Smartphone Control (SoftAP at 192.168.4.1)
-    webRemote.init(&gaitPlanner, &servoDriver, &faceController, "Spider-Robot", "");
+    webRemote.init(&gaitPlanner, &servoDriver, &faceController, &inCalibrationMode, "Spider-Robot", "");
 
     // Command smooth initial stand pose
-    servoDriver.commandStandPoseSmooth(600);
-    delay(200);
+    servoDriver.commandStandPoseSmooth(400);
+    delay(100);
 
     printHelp();
     printStatus();
@@ -302,21 +302,38 @@ void handleCommandString(String cmdStr) {
 // ----------------------------------------------------------------------------
 void handleNormalCommand(const String& cmdStr, const String& upperCmd) {
     if (upperCmd == "W" || upperCmd == "FORWARD" || upperCmd == "START" || upperCmd == "GO" || upperCmd == "WALK" || upperCmd == "MOVE") {
+        if (!servoDriver.isConnected()) {
+            Serial.println(">> [ERROR] Cannot walk: PCA9685 servo driver not detected at 0x40!");
+            Serial.println("   Check I2C connections (SDA=21, SCL=22) and run 'SCAN' to verify hardware.");
+            return;
+        }
         gaitPlanner.cmdWalkForward();
         Serial.println(">> COMMAND: Walk Forward (W)");
         return;
     }
     if (upperCmd == "B" || upperCmd == "BACKWARD") {
+        if (!servoDriver.isConnected()) {
+            Serial.println(">> [ERROR] Cannot walk: PCA9685 servo driver not detected at 0x40!");
+            return;
+        }
         gaitPlanner.cmdWalkBackward();
         Serial.println(">> COMMAND: Walk Backward (B)");
         return;
     }
     if (upperCmd == "A" || upperCmd == "LEFT") {
+        if (!servoDriver.isConnected()) {
+            Serial.println(">> [ERROR] Cannot turn: PCA9685 servo driver not detected at 0x40!");
+            return;
+        }
         gaitPlanner.cmdTurnLeft();
         Serial.println(">> COMMAND: Turn Left (A)");
         return;
     }
     if (upperCmd == "D" || upperCmd == "RIGHT") {
+        if (!servoDriver.isConnected()) {
+            Serial.println(">> [ERROR] Cannot turn: PCA9685 servo driver not detected at 0x40!");
+            return;
+        }
         gaitPlanner.cmdTurnRight();
         Serial.println(">> COMMAND: Turn Right (D)");
         return;
@@ -324,7 +341,7 @@ void handleNormalCommand(const String& cmdStr, const String& upperCmd) {
     if (upperCmd == "S" || upperCmd == "STOP") {
         if (gaitPlanner.getState() == STATE_STAND) {
             Serial.println();
-            Serial.println(">> [NOTICE] 'S' is the STOP command! The robot is already STOPPED in Stand Pose.");
+            Serial.println(">> [NOTICE] Robot is already in Stand Pose (holding position).");
             Serial.println("   To make the robot move / walk:");
             Serial.println("     - Send 'W' (or 'START' / 'GO') : Walk Forward");
             Serial.println("     - Send 'B'                    : Walk Backward");
@@ -340,8 +357,7 @@ void handleNormalCommand(const String& cmdStr, const String& upperCmd) {
     }
     if (upperCmd == "H" || upperCmd == "STAND") {
         gaitPlanner.cmdStand();
-        servoDriver.commandStandPoseSmooth(400);
-        Serial.println(">> COMMAND: Stand Pose (H / STAND) - Driving all limbs to stand pose.");
+        Serial.println(">> COMMAND: Stand Pose (H / STAND) - Smoothly driving all limbs to neutral stand pose.");
         return;
     }
     if (upperCmd == "L" || upperCmd == "SIT") {
@@ -452,8 +468,9 @@ void handleNormalCommand(const String& cmdStr, const String& upperCmd) {
 // ----------------------------------------------------------------------------
 void handleCalibrationCommand(const String& cmdStr, const String& upperCmd) {
     // Exit Calibration Mode
-    if (upperCmd == "X" || upperCmd == "Q" || upperCmd == "EXIT") {
+    if (upperCmd == "X" || upperCmd == "Q" || upperCmd == "EXIT" || upperCmd == "S" || upperCmd == "STAND") {
         inCalibrationMode = false;
+        gaitPlanner.cmdStand();
         servoDriver.commandStandPoseDirect();
         Serial.println();
         Serial.println(">> EXITED CALIBRATION MODE. Returned to Stand Pose.");

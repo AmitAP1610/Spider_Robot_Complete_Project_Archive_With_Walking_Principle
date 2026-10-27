@@ -140,6 +140,7 @@ WebRemote::WebRemote()
       m_gaitPlanner(nullptr),
       m_servoDriver(nullptr),
       m_faceController(nullptr),
+      m_inCalibrationMode(nullptr),
       m_ssid("Spider-Robot"),
       m_password(""),
       m_initialized(false)
@@ -149,11 +150,13 @@ WebRemote::WebRemote()
 bool WebRemote::init(GaitPlanner* gaitPlanner,
                      ServoDriver* servoDriver,
                      FaceController* faceController,
+                     const bool* inCalibrationMode,
                      const char* apSsid,
                      const char* apPassword) {
     m_gaitPlanner = gaitPlanner;
     m_servoDriver = servoDriver;
     m_faceController = faceController;
+    m_inCalibrationMode = inCalibrationMode;
     m_ssid = apSsid;
     m_password = apPassword;
 
@@ -218,6 +221,16 @@ void WebRemote::handleCommand() {
         String action = m_server.arg("action");
         action.toLowerCase();
 
+        // Arbitration: Lock out locomotion commands if Serial Calibration Mode is active
+        if (m_inCalibrationMode && *m_inCalibrationMode) {
+            if (action == "walk" || action == "back" || action == "left" || action == "right" ||
+                action == "sit" || action == "test_all" || action == "test_leg" || action == "center") {
+                Serial.println(">> [WEB ARBITRATION] Web command ignored: Serial Calibration Mode active.");
+                handleStatus();
+                return;
+            }
+        }
+
         if (action == "walk") {
             if (m_gaitPlanner) m_gaitPlanner->cmdWalkForward();
             if (m_faceController && m_faceController->isAutoReaction()) {
@@ -245,7 +258,6 @@ void WebRemote::handleCommand() {
             }
         } else if (action == "stand") {
             if (m_gaitPlanner) m_gaitPlanner->cmdStand();
-            if (m_servoDriver) m_servoDriver->commandStandPoseSmooth(400);
             if (m_faceController && m_faceController->isAutoReaction()) {
                 m_faceController->setFaceWithMode("idle", FACE_ANIM_LOOP);
             }
@@ -272,7 +284,7 @@ void WebRemote::handleCommand() {
                 }
             }
         } else if (action == "center") {
-            if (m_servoDriver) m_servoDriver->commandStandPoseSmooth(300);
+            if (m_gaitPlanner) m_gaitPlanner->cmdStand();
         }
     }
 
@@ -294,7 +306,9 @@ void WebRemote::handleCommand() {
 
 void WebRemote::handleStatus() {
     String stateStr = "STAND";
-    if (m_gaitPlanner) {
+    if (m_inCalibrationMode && *m_inCalibrationMode) {
+        stateStr = "CALIBRATE";
+    } else if (m_gaitPlanner) {
         switch (m_gaitPlanner->getState()) {
             case 0: stateStr = "STAND"; break;
             case 1: stateStr = "WALK FWD"; break;

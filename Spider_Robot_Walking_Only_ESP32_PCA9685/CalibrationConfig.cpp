@@ -207,9 +207,10 @@ namespace ServoCalibration {
 
         // All validations passed! Apply stored values to RAM calibration table
         for (uint8_t i = 0; i < 12; i++) {
-            // Auto-heal corrupt centers that were clamped against travel limits (< 70 deg or > 110 deg)
-            if (blob.joints[i].centerAngleDeg < 70.0f || blob.joints[i].centerAngleDeg > 110.0f) {
-                g_servoCalibration[i].centerAngleDeg = 90.0f;
+            // Preserve calibrated center as long as it is within configured safe angle limits
+            if (blob.joints[i].centerAngleDeg < blob.joints[i].minAngleDeg || 
+                blob.joints[i].centerAngleDeg > blob.joints[i].maxAngleDeg) {
+                g_servoCalibration[i].centerAngleDeg = g_defaultServoCalibration[i].centerAngleDeg;
             } else {
                 g_servoCalibration[i].centerAngleDeg = blob.joints[i].centerAngleDeg;
             }

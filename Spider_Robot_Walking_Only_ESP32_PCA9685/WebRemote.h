@@ -40,6 +40,7 @@ public:
     bool init(GaitPlanner* gaitPlanner,
               ServoDriver* servoDriver,
               FaceController* faceController,
+              const bool* inCalibrationMode = nullptr,
               const char* apSsid = "Spider-Robot",
               const char* apPassword = "");
 
@@ -71,6 +72,7 @@ private:
     GaitPlanner* m_gaitPlanner;
     ServoDriver* m_servoDriver;
     FaceController* m_faceController;
+    const bool* m_inCalibrationMode;
 
     const char* m_ssid;
     const char* m_password;

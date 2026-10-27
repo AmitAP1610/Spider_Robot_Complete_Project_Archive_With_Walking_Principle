@@ -371,8 +371,8 @@ void FaceController::renderBitmap(const unsigned char* bitmap) {
 
     // FreeRTOS Mutex protection for shared I2C bus with PCA9685
     if (m_i2cMutex != nullptr) {
-        if (xSemaphoreTake(m_i2cMutex, pdMS_TO_TICKS(15)) != pdTRUE) {
-            return; // Skip this frame if servo bus is active to avoid stalling gait engine
+        if (xSemaphoreTake(m_i2cMutex, pdMS_TO_TICKS(10)) != pdTRUE) {
+            return; // Skip this visual frame if servo bus is active to avoid stalling gait engine
         }
     }
 

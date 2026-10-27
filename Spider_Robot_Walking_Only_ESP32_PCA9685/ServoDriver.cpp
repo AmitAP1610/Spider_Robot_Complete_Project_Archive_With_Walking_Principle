@@ -108,7 +108,7 @@ void ServoDriver::update(float dt, const LegJointAngles targetAngles[4]) {
 
     // Acquire shared I2C bus mutex before writing to PCA9685
     if (m_i2cMutex != nullptr) {
-        if (xSemaphoreTake(m_i2cMutex, pdMS_TO_TICKS(15)) != pdTRUE) {
+        if (xSemaphoreTake(m_i2cMutex, pdMS_TO_TICKS(25)) != pdTRUE) {
             return; // Bus temporarily occupied by OLED; skip this 20ms slice
         }
     }
